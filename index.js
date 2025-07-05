@@ -31,7 +31,6 @@ app.use(cors({
   origin: '*',
 }));
 
-app.options('*', cors());
 // Публичные эндпоинты
 app.post('/api/register', register);
 app.get('/api/user/:telegramId', getUser);
