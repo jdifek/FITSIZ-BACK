@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,8 +13,9 @@ model User {
   telegramId String   @unique
   firstName  String?
   phone      String?
-  maskId     Int?     @default(0)
   email      String?
+  maskId     Int?     @map("mask_id")
+  mask       Mask?    @relation(fields: [maskId], references: [id])
   createdAt  DateTime @default(now())
 }
 
@@ -25,23 +27,49 @@ model UserAdmin {
 }
 
 model Mask {
-  id           Int           @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   name         String
-  instructions String?
-  CatalogItem  CatalogItem[]
-}
-
-model CatalogItem {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String?
-  link        String?
-  maskId      Int? // Связь с маской
-  mask        Mask?   @relation(fields: [maskId], references: [id])
+  instructions String?    // Инструкции
+  imageUrl     String?    // URL изображения
+  price        String?    // Цена
+  weight       String?    // Вес
+  viewArea     String?    // Область обзора
+  sensors      Int?       // Количество сенсоров
+  power        String?    // Тип питания
+  shadeRange   String?    // Диапазон затемнения
+  material     String?    // Материал
+  description  String?    // Описание (из CatalogItem)
+  link         String?    // Ссылка (из CatalogItem)
+  installment  String?    // Цена в рассрочку (из CatalogItem)
+  size         String?    // Размер (из CatalogItem)
+  days         String?    // Количество дней (из CatalogItem)
+  features     Feature[]  // Связь с особенностями
+  reviews      Review[]   // Связь с отзывами
+  users        User[]     @relation // Связь с пользователями
 }
 
 model Video {
-  id    Int     @id @default(autoincrement())
-  title String
-  url   String?
+  id           Int       @id @default(autoincrement())
+  title        String
+  url          String?   // URL видео
+  description  String?   // Описание
+  duration     String?   // Длительность
+  thumbnailUrl String?   // URL миниатюры
+}
+
+model Feature {
+  id        Int      @id @default(autoincrement())
+  name      String   // Название особенности (например, "Автоматическое затемнение")
+  maskId    Int      // Связь с маской
+  mask      Mask     @relation(fields: [maskId], references: [id])
+}
+
+model Review {
+  id         Int       @id @default(autoincrement())
+  userName   String    // Имя пользователя
+  rating     Float     // Рейтинг (например, 4.7)
+  comment    String?   // Текст отзыва
+  createdAt  DateTime  @default(now())
+  maskId     Int?      // Связь с маской
+  mask       Mask?     @relation(fields: [maskId], references: [id])
 }
