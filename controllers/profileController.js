@@ -8,12 +8,17 @@ exports.updateProfile = async (req, res) => {
     if (!telegramId) {
       return res.status(400).json({ error: 'telegramId is required' });
     }
-    if (maskId) {
-      const mask = await prisma.mask.findUnique({ where: { id: parseInt(maskId) } });
+    if (maskId !== undefined && maskId !== null && maskId !== '') {
+      const parsedMaskId = parseInt(maskId);
+      if (isNaN(parsedMaskId)) {
+        return res.status(400).json({ error: 'Invalid maskId' });
+      }
+      const mask = await prisma.mask.findUnique({ where: { id: parsedMaskId } });
       if (!mask) {
         return res.status(400).json({ error: 'Mask with provided maskId does not exist' });
       }
     }
+    
     const user = await prisma.user.upsert({
       where: { telegramId },
       update: {
