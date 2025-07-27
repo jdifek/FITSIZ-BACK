@@ -165,22 +165,23 @@ exports.loginAdmin = async (req, res) => {
 
 exports.createMask = async (req, res) => {
   try {
-    const { 
-      name, 
-      instructions, 
-      imageUrl, 
-      price, 
-      weight, 
-      viewArea, 
-      sensors, 
-      power, 
-      shadeRange, 
+    const {
+      name,
+      instructions,
+      imageUrl,
+      price,
+      weight,
+      viewArea,
+      sensors,
+      power,
+      shadeRange,
       material,
       description,
       link,
       installment,
       size,
-      days
+      days,
+      extraFields = [], // <-- новые поля
     } = req.body;
 
     if (!name) {
@@ -204,8 +205,20 @@ exports.createMask = async (req, res) => {
         installment: installment || null,
         size: size || null,
         days: days || null,
+        extraFields: {
+          create: extraFields
+            .filter(f => f.key && f.value) // защита от пустых
+            .map(f => ({
+              key: f.key,
+              value: f.value,
+            })),
+        },
+      },
+      include: {
+        extraFields: true, // <-- если хочешь вернуть вместе с ответом
       },
     });
+
     res.status(201).json(mask);
   } catch (error) {
     console.error('Create mask error:', error.message);
@@ -216,54 +229,78 @@ exports.createMask = async (req, res) => {
 exports.updateMask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { 
-      name, 
-      instructions, 
-      imageUrl, 
-      price, 
-      weight, 
-      viewArea, 
-      sensors, 
-      power, 
-      shadeRange, 
+    const {
+      name,
+      instructions,
+      imageUrl,
+      price,
+      weight,
+      viewArea,
+      sensors,
+      power,
+      shadeRange,
       material,
       description,
       link,
       installment,
       size,
-      days
+      days,
+      extraFields = [], // ✅ получаем доп. поля
     } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
     }
 
-    const mask = await prisma.mask.update({
-      where: { id: parseInt(id) },
-      data: {
-        name,
-        instructions: instructions || null,
-        imageUrl: imageUrl || null,
-        price: price || null,
-        weight: weight || null,
-        viewArea: viewArea || null,
-        sensors: sensors ? parseInt(sensors) : null,
-        power: power || null,
-        shadeRange: shadeRange || null,
-        material: material || null,
-        description: description || null,
-        link: link || null,
-        installment: installment || null,
-        size: size || null,
-        days: days || null,
-      },
-    });
-    res.json(mask);
+    const parsedId = parseInt(id);
+
+    const result = await prisma.$transaction([
+      // 1. Обновляем основную маску
+      prisma.mask.update({
+        where: { id: parsedId },
+        data: {
+          name,
+          instructions: instructions || null,
+          imageUrl: imageUrl || null,
+          price: price || null,
+          weight: weight || null,
+          viewArea: viewArea || null,
+          sensors: sensors ? parseInt(sensors) : null,
+          power: power || null,
+          shadeRange: shadeRange || null,
+          material: material || null,
+          description: description || null,
+          link: link || null,
+          installment: installment || null,
+          size: size || null,
+          days: days || null,
+        },
+      }),
+
+      // 2. Удаляем все старые extraFields
+      prisma.extraField.deleteMany({
+        where: { maskId: parsedId },
+      }),
+
+      // 3. Создаём новые extraFields
+      prisma.extraField.createMany({
+        data: extraFields
+          .filter(f => f.key && f.value)
+          .map(f => ({
+            key: f.key,
+            value: f.value,
+            maskId: parsedId,
+          })),
+      }),
+    ]);
+
+    res.json({ updatedMask: result[0] });
   } catch (error) {
     console.error('Update mask error:', error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 exports.deleteMask = async (req, res) => {
   try {

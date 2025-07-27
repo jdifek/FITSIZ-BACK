@@ -30,6 +30,7 @@ model Mask {
   id           Int        @id @default(autoincrement())
   name         String
   instructions String?    // Инструкции
+    extraFields ExtraField[]
   imageUrl     String?    // URL изображения
   price        String?    // Цена
   weight       String?    // Вес
@@ -46,6 +47,13 @@ model Mask {
   features     Feature[]  // Связь с особенностями
   reviews      Review[]   // Связь с отзывами
   users        User[]     @relation // Связь с пользователями
+}
+model ExtraField {
+  id      Int    @id @default(autoincrement())
+  key     String
+  value   String
+  mask    Mask   @relation(fields: [maskId], references: [id])
+  maskId  Int
 }
 
 model Video {
