@@ -14,6 +14,8 @@ model User {
   firstName  String?
   phone      String?
   email      String?
+    isBotAvailable  Boolean @default(false)
+
   maskId     Int?     @map("mask_id")
   mask       Mask?    @relation(fields: [maskId], references: [id])
   createdAt  DateTime @default(now())
@@ -54,6 +56,11 @@ model ExtraField {
   value   String
   mask    Mask   @relation(fields: [maskId], references: [id])
   maskId  Int
+}
+
+model Setting {
+  key   String @id
+  value String
 }
 
 model Video {

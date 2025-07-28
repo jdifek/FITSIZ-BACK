@@ -1,5 +1,7 @@
 
 const { PrismaClient } = require('@prisma/client');
+const { sendMessage } = require('../services/telegramService');
+const { getSetting } = require('../services/settingsService');
 const prisma = new PrismaClient();
 
 exports.updateProfile = async (req, res) => {
@@ -36,6 +38,13 @@ exports.updateProfile = async (req, res) => {
       },
       include: { mask: true },
     });
+
+    if (mask && user.telegramId) {
+      const msg = await getSetting('TG_MESSAGE_ON_ADD_MASK');
+      if (msg) {
+        await sendMessage(user.telegramId, msg);
+      }
+    }
     res.json(user);
   } catch (error) {
     console.error('Update profile error:', error.message);

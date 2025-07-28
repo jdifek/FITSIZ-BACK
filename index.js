@@ -27,10 +27,13 @@ const {
   deleteReview,
   getReviews,
   getFeature,
+  getSettings,
+  updateSetting,
+  sendGlobalMessage,
 } = require('./controllers/adminController.js');
-
+require('./bot');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3333;
 
 app.use(express.json());
 app.use(cors());
@@ -65,6 +68,11 @@ app.post('/api/admin/reviews', createReview);
 app.get('/api/admin/reviews', getReviews);
 app.put('/api/admin/reviews/:id', updateReview);
 app.delete('/api/admin/reviews/:id', deleteReview);
+
+
+app.get('/api/admin/settings', getSettings);
+app.post('/api/admin/settings', updateSetting);
+app.post('/api/admin/send-message', sendGlobalMessage);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

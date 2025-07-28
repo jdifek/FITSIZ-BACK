@@ -4,6 +4,8 @@ const { createFeature, updateFeature, deleteFeature } = require('../services/fea
 const { createReview, updateReview, deleteReview } = require('../services/reviewService');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { sendBroadcast } = require('../services/telegramService');
+const { setSetting, getSetting } = require('../services/settingsService');
 const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
@@ -385,7 +387,40 @@ exports.deleteVideo = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+// Получение текущих настроек
+exports.getSettings = async (req, res) => {
+  const keys = ['TG_MESSAGE_ON_ADD_MASK'];
+  const settings = await Promise.all(
+    keys.map(async (key) => ({
+      key,
+      value: await getSetting(key),
+    }))
+  );
+  res.json(settings);
+};
 
+// Обновление одного значения
+exports.updateSetting = async (req, res) => {
+  const { key, value } = req.body;
+  if (!key || value === undefined) {
+    return res.status(400).json({ error: 'Key and value required' });
+  }
+  const result = await setSetting(key, value);
+  res.json(result);
+};
+
+// Массовая рассылка
+exports.sendGlobalMessage = async (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: 'Text is required' });
+
+  const users = await prisma.user.findMany({ select: { telegramId: true } });
+  const chatIds = users.map((u) => u.telegramId);
+
+  await sendBroadcast(chatIds, text);
+
+  res.json({ success: true, sentTo: chatIds.length });
+};
 exports.getUsers = async (req, res) => {
   try {
     const { telegramId } = req.query;
