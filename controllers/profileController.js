@@ -3,24 +3,28 @@ const { PrismaClient } = require('@prisma/client');
 const { sendMessage } = require('../services/telegramService');
 const { getSetting } = require('../services/settingsService');
 const prisma = new PrismaClient();
-
 exports.updateProfile = async (req, res) => {
   try {
     const { telegramId, firstName, phone, email, maskId } = req.body;
+
     if (!telegramId) {
       return res.status(400).json({ error: 'telegramId is required' });
     }
+
+    let mask = null; // 🔧 Объявляем заранее
+
     if (maskId !== undefined && maskId !== null && maskId !== '') {
       const parsedMaskId = parseInt(maskId);
       if (isNaN(parsedMaskId)) {
         return res.status(400).json({ error: 'Invalid maskId' });
       }
-      const mask = await prisma.mask.findUnique({ where: { id: parsedMaskId } });
+
+      mask = await prisma.mask.findUnique({ where: { id: parsedMaskId } });
       if (!mask) {
         return res.status(400).json({ error: 'Mask with provided maskId does not exist' });
       }
     }
-    
+
     const user = await prisma.user.upsert({
       where: { telegramId },
       update: {
@@ -45,6 +49,7 @@ exports.updateProfile = async (req, res) => {
         await sendMessage(user.telegramId, msg);
       }
     }
+
     res.json(user);
   } catch (error) {
     console.error('Update profile error:', error.message);
