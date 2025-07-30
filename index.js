@@ -31,7 +31,7 @@ const {
   updateSetting,
   sendGlobalMessage,
 } = require('./controllers/adminController.js');
-// require('./bot');
+require('./bot');
 const app = express();
 const port = process.env.PORT || 3333;
 
