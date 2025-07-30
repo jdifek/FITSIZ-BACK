@@ -8,8 +8,8 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
 bot.onText(/\/start/, async (msg) => {
-  const chatId = String(msg.chat.id);
-  const firstName = msg.chat.first_name || 'Без имени';
+  const chatId = String(msg.user.id);
+  const firstName = msg.user.first_name || 'Без имени';
 
   try {
     await prisma.user.upsert({
