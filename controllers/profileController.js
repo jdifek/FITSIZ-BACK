@@ -43,12 +43,17 @@ exports.updateProfile = async (req, res) => {
       include: { mask: true },
     });
 
-    if (mask && user.telegramId) {
+    if (mask && user.telegramId && user.isBotAvailable) {
       const msg = await getSetting('TG_MESSAGE_ON_ADD_MASK');
       if (msg) {
         await sendMessage(user.telegramId, msg);
+      } else {
+        console.warn('TG_MESSAGE_ON_ADD_MASK not set in settings');
       }
+    } else {
+      console.warn(`Skip sending: mask=${!!mask}, telegramId=${user.telegramId}, isBotAvailable=${user.isBotAvailable}`);
     }
+    
 
     res.json(user);
   } catch (error) {
