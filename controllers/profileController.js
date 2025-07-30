@@ -32,6 +32,8 @@ exports.updateProfile = async (req, res) => {
         phone: phone || null,
         email: email || null,
         maskId: maskId ? parseInt(maskId) : null,
+        isBotAvailable: true, // ✅ Добавь это
+
       },
       create: {
         telegramId,
