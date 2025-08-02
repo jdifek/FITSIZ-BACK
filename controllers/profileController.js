@@ -5,13 +5,13 @@ const { getSetting } = require('../services/settingsService');
 const prisma = new PrismaClient();
 exports.updateProfile = async (req, res) => {
   try {
-    const { telegramId, firstName, phone, email, maskId } = req.body;
+    const { telegramId, firstName, phone, email, maskId, quiz } = req.body;
 
     if (!telegramId) {
       return res.status(400).json({ error: 'telegramId is required' });
     }
 
-    let mask = null; // 🔧 Объявляем заранее
+    let mask = null;
 
     if (maskId !== undefined && maskId !== null && maskId !== '') {
       const parsedMaskId = parseInt(maskId);
@@ -32,8 +32,8 @@ exports.updateProfile = async (req, res) => {
         phone: phone || null,
         email: email || null,
         maskId: maskId ? parseInt(maskId) : null,
-        isBotAvailable: true, // ✅ Добавь это
-
+        isBotAvailable: true,
+        quiz: typeof quiz === 'boolean' ? quiz : undefined, // ✅ добавлено
       },
       create: {
         telegramId,
@@ -41,6 +41,7 @@ exports.updateProfile = async (req, res) => {
         phone: phone || null,
         email: email || null,
         maskId: maskId ? parseInt(maskId) : null,
+        quiz: typeof quiz === 'boolean' ? quiz : false, // ✅ добавлено
       },
       include: { mask: true },
     });
@@ -55,7 +56,6 @@ exports.updateProfile = async (req, res) => {
     } else {
       console.warn(`Skip sending: mask=${!!mask}, telegramId=${user.telegramId}, isBotAvailable=${user.isBotAvailable}`);
     }
-    
 
     res.json(user);
   } catch (error) {
@@ -63,3 +63,4 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
