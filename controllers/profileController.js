@@ -5,7 +5,7 @@ const { getSetting } = require('../services/settingsService');
 const prisma = new PrismaClient();
 exports.updateProfile = async (req, res) => {
   try {
-    const { telegramId, firstName, phone, email, maskId, quiz } = req.body;
+    const { telegramId, firstName, phone, email, maskId, quiz, add } = req.body;
 
     if (!telegramId) {
       return res.status(400).json({ error: 'telegramId is required' });
@@ -46,7 +46,7 @@ exports.updateProfile = async (req, res) => {
       include: { mask: true },
     });
 
-    if (mask && user.telegramId && user.isBotAvailable) {
+    if (mask && user.telegramId && user.isBotAvailable && add) {
       const msg = await getSetting('TG_MESSAGE_ON_ADD_MASK');
       if (msg) {
         await sendMessage(user.telegramId, msg);
