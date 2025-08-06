@@ -183,7 +183,7 @@ exports.createMask = async (req, res) => {
       installment,
       size,
       days,
-      extraFields = [], // <-- новые поля
+      ExtraField = [], // <-- новые поля
     } = req.body;
 
     if (!name) {
@@ -207,8 +207,8 @@ exports.createMask = async (req, res) => {
         installment: installment || null,
         size: size || null,
         days: days || null,
-        extraFields: {
-          create: extraFields
+        ExtraField: {
+          create: ExtraField
             .filter(f => f.key && f.value) // защита от пустых
             .map(f => ({
               key: f.key,
@@ -217,7 +217,7 @@ exports.createMask = async (req, res) => {
         },
       },
       include: {
-        extraFields: true, // <-- если хочешь вернуть вместе с ответом
+        ExtraField: true, // <-- если хочешь вернуть вместе с ответом
       },
     });
 
@@ -247,7 +247,7 @@ exports.updateMask = async (req, res) => {
       installment,
       size,
       days,
-      extraFields = [], // ✅ получаем доп. поля
+      ExtraField = [], // ✅ получаем доп. поля
     } = req.body;
 
     if (!name) {
@@ -279,14 +279,14 @@ exports.updateMask = async (req, res) => {
         },
       }),
 
-      // 2. Удаляем все старые extraFields
-      prisma.extraField.deleteMany({
+      // 2. Удаляем все старые ExtraField
+      prisma.ExtraField.deleteMany({
         where: { maskId: parsedId },
       }),
 
-      // 3. Создаём новые extraFields
-      prisma.extraField.createMany({
-        data: extraFields
+      // 3. Создаём новые ExtraField
+      prisma.ExtraField.createMany({
+        data: ExtraField
           .filter(f => f.key && f.value)
           .map(f => ({
             key: f.key,
@@ -317,12 +317,12 @@ exports.deleteMask = async (req, res) => {
 
 exports.createVideo = async (req, res) => {
   try {
-    const { 
-      title, 
-      url, 
-      description, 
-      duration, 
-      thumbnailUrl 
+    const {
+      title,
+      url,
+      description,
+      duration,
+      thumbnailUrl
     } = req.body;
 
     if (!title) {
@@ -348,12 +348,12 @@ exports.createVideo = async (req, res) => {
 exports.updateVideo = async (req, res) => {
   try {
     const { id } = req.params;
-    const { 
-      title, 
-      url, 
-      description, 
-      duration, 
-      thumbnailUrl 
+    const {
+      title,
+      url,
+      description,
+      duration,
+      thumbnailUrl
     } = req.body;
 
     if (!title) {

@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,17 +8,27 @@ datasource db {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  telegramId String   @unique
-  firstName  String?
-  phone      String?
-  email      String?
-    isBotAvailable  Boolean @default(false)
-  quiz            Boolean  @default(false) // <--- новое поле
+  id             Int      @id @default(autoincrement())
+  telegramId     String   @unique
+  firstName      String?
+  phone          String?
+  email          String?
+  isBotAvailable Boolean  @default(false)
+  quiz           Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
-  maskId     Int?     @map("mask_id")
-  mask       Mask?    @relation(fields: [maskId], references: [id])
-  createdAt  DateTime @default(now())
+  userMasks UserMask[] // 👈 теперь список масок
+}
+
+model UserMask {
+  id     Int @id @default(autoincrement())
+  userId Int
+  maskId Int
+
+  user User @relation(fields: [userId], references: [id])
+  mask Mask @relation(fields: [maskId], references: [id])
+
+  @@unique([userId, maskId]) // Один юзер — одна маска один раз
 }
 
 model UserAdmin {
@@ -30,33 +39,34 @@ model UserAdmin {
 }
 
 model Mask {
-  id           Int        @id @default(autoincrement())
+  id           Int          @id @default(autoincrement())
   name         String
-  instructions String?    // Инструкции
-    extraFields ExtraField[]
-  imageUrl     String?    // URL изображения
-  price        String?    // Цена
-  weight       String?    // Вес
-  viewArea     String?    // Область обзора
-  sensors      Int?       // Количество сенсоров
-  power        String?    // Тип питания
-  shadeRange   String?    // Диапазон затемнения
-  material     String?    // Материал
-  description  String?    // Описание (из CatalogItem)
-  link         String?    // Ссылка (из CatalogItem)
-  installment  String?    // Цена в рассрочку (из CatalogItem)
-  size         String?    // Размер (из CatalogItem)
-  days         String?    // Количество дней (из CatalogItem)
-  features     Feature[]  // Связь с особенностями
-  reviews      Review[]   // Связь с отзывами
-  users        User[]     @relation // Связь с пользователями
+  instructions String?
+  imageUrl     String?
+  price        String?
+  weight       String?
+  viewArea     String?
+  sensors      Int?
+  power        String?
+  shadeRange   String?
+  material     String?
+  description  String?
+  link         String?
+  installment  String?
+  size         String?
+  days         String?
+  features     Feature[]
+  reviews      Review[]
+  userMasks    UserMask[] // 👈 теперь список пользователей
+  ExtraField   ExtraField[]
 }
+
 model ExtraField {
-  id      Int    @id @default(autoincrement())
-  key     String
-  value   String
-  mask    Mask   @relation(fields: [maskId], references: [id])
-  maskId  Int
+  id     Int    @id @default(autoincrement())
+  key    String
+  value  String
+  mask   Mask   @relation(fields: [maskId], references: [id])
+  maskId Int
 }
 
 model Setting {
@@ -65,27 +75,27 @@ model Setting {
 }
 
 model Video {
-  id           Int       @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   title        String
-  url          String?   // URL видео
-  description  String?   // Описание
-  duration     String?   // Длительность
-  thumbnailUrl String?   // URL миниатюры
+  url          String? // URL видео
+  description  String? // Описание
+  duration     String? // Длительность
+  thumbnailUrl String? // URL миниатюры
 }
 
 model Feature {
-  id        Int      @id @default(autoincrement())
-  name      String   // Название особенности (например, "Автоматическое затемнение")
-  maskId    Int      // Связь с маской
-  mask      Mask     @relation(fields: [maskId], references: [id])
+  id     Int    @id @default(autoincrement())
+  name   String // Название особенности (например, "Автоматическое затемнение")
+  maskId Int // Связь с маской
+  mask   Mask   @relation(fields: [maskId], references: [id])
 }
 
 model Review {
-  id         Int       @id @default(autoincrement())
-  userName   String    // Имя пользователя
-  rating     Float     // Рейтинг (например, 4.7)
-  comment    String?   // Текст отзыва
-  createdAt  DateTime  @default(now())
-  maskId     Int?      // Связь с маской
-  mask       Mask?     @relation(fields: [maskId], references: [id])
+  id        Int      @id @default(autoincrement())
+  userName  String // Имя пользователя
+  rating    Float // Рейтинг (например, 4.7)
+  comment   String? // Текст отзыва
+  createdAt DateTime @default(now())
+  maskId    Int? // Связь с маской
+  mask      Mask?    @relation(fields: [maskId], references: [id])
 }

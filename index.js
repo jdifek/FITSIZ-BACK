@@ -7,6 +7,9 @@ const { getUser } = require('./controllers/userController.js');
 const { getMasks, getMaskInstructions, getMask } = require('./controllers/maskController.js');
 const { getVideos, getVideo } = require('./controllers/videoController.js');
 const { updateProfile } = require('./controllers/profileController.js');
+
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const {
   loginAdmin,
   createMask,
@@ -47,6 +50,71 @@ app.get('/api/masks/:id/instructions', getMaskInstructions);
 app.get('/api/videos', getVideos);
 app.get('/api/videos/:id', getVideo); // New route
 app.post('/api/profile', updateProfile);
+// routes/profile.js или routes/user.js
+app.get('/api/user/:telegramId/masks', async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { telegramId },
+      include: {
+        userMasks: {
+          include: {
+            mask: {
+              include: {
+                features: true,
+                reviews: true,
+                ExtraField: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const masks = user.userMasks.map((userMask) => userMask.mask);
+    res.json(masks);
+  } catch (error) {
+    console.error('Get user masks error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+app.post('/api/user/:telegramId/add-mask', async (req, res) => {
+  const { telegramId } = req.params;
+  const { maskId } = req.body;
+
+  if (!maskId) return res.status(400).json({ error: 'maskId is required' });
+
+  const user = await prisma.user.findUnique({ where: { telegramId } });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const mask = await prisma.mask.findUnique({ where: { id: maskId } });
+  if (!mask) return res.status(404).json({ error: 'Mask not found' });
+
+  // Проверка: не добавлена ли уже
+  const existing = await prisma.userMask.findUnique({
+    where: {
+      userId_maskId: {
+        userId: user.id,
+        maskId: mask.id,
+      },
+    },
+  });
+  if (existing) return res.status(400).json({ error: 'Mask already added' });
+
+  const userMask = await prisma.userMask.create({
+    data: {
+      userId: user.id,
+      maskId: mask.id,
+    },
+  });
+
+  res.json(userMask);
+});
 
 // Админские эндпоинты
 app.post('/api/admin/login', loginAdmin);

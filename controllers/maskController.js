@@ -6,7 +6,7 @@ exports.getMask = async (req, res) => {
     const { id } = req.params;
     const mask = await prisma.mask.findUnique({
       where: { id: parseInt(id) },
-      include: { features: true, reviews: true,extraFields: true },
+      include: { features: true, reviews: true, ExtraField: true },
     });
     if (!mask) {
       return res.status(404).json({ error: "Mask not found" });
@@ -23,7 +23,7 @@ exports.getMasks = async (req, res) => {
       include: {
         features: true,
         reviews: true,
-        extraFields: true, 
+        ExtraField: true,
       },
     });
     res.json(masks);
