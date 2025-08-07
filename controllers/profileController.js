@@ -1,8 +1,3 @@
-
-const { PrismaClient } = require('@prisma/client');
-const { sendMessage } = require('../services/telegramService');
-const { getSetting } = require('../services/settingsService');
-const prisma = new PrismaClient();
 exports.updateProfile = async (req, res) => {
   try {
     const { telegramId, firstName, phone, email, maskId, quiz, add } = req.body;
@@ -12,7 +7,6 @@ exports.updateProfile = async (req, res) => {
     }
 
     let mask = null;
-
     if (maskId !== undefined && maskId !== null && maskId !== '') {
       const parsedMaskId = parseInt(maskId);
       if (isNaN(parsedMaskId)) {
@@ -31,30 +25,44 @@ exports.updateProfile = async (req, res) => {
         firstName: firstName || undefined,
         phone: phone || null,
         email: email || null,
-        maskId: maskId ? parseInt(maskId) : null,
         isBotAvailable: true,
-        quiz: typeof quiz === 'boolean' ? quiz : undefined, // ✅ добавлено
+        quiz: typeof quiz === 'boolean' ? quiz : undefined,
       },
       create: {
         telegramId,
         firstName: firstName || 'Unknown',
         phone: phone || null,
         email: email || null,
-        maskId: maskId ? parseInt(maskId) : null,
-        quiz: typeof quiz === 'boolean' ? quiz : false, // ✅ добавлено
+        quiz: typeof quiz === 'boolean' ? quiz : false,
+        isBotAvailable: true,
       },
-      include: { mask: true },
     });
 
-    if (mask && user.telegramId && user.isBotAvailable && add === true) {
+    if (mask && add === true) {
+      const existing = await prisma.userMask.findUnique({
+        where: {
+          userId_maskId: {
+            userId: user.id,
+            maskId: mask.id,
+          },
+        },
+      });
+
+      if (!existing) {
+        await prisma.userMask.create({
+          data: {
+            user: { connect: { id: user.id } },
+            mask: { connect: { id: mask.id } },
+          },
+        });
+      }
+
       const msg = await getSetting('TG_MESSAGE_ON_ADD_MASK');
       if (msg) {
         await sendMessage(user.telegramId, msg);
       } else {
         console.warn('TG_MESSAGE_ON_ADD_MASK not set in settings');
       }
-    } else {
-      console.warn(`Skip sending: mask=${!!mask}, telegramId=${user.telegramId}, isBotAvailable=${user.isBotAvailable}`);
     }
 
     res.json(user);
@@ -63,4 +71,3 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
