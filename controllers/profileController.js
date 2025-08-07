@@ -1,3 +1,8 @@
+
+const { PrismaClient } = require('@prisma/client');
+const { sendMessage } = require('../services/telegramService');
+const { getSetting } = require('../services/settingsService');
+const prisma = new PrismaClient();
 exports.updateProfile = async (req, res) => {
   try {
     const { telegramId, firstName, phone, email, maskId, quiz, add } = req.body;
