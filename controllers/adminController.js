@@ -167,66 +167,45 @@ exports.loginAdmin = async (req, res) => {
 
 exports.createMask = async (req, res) => {
   try {
-    const {
-      name,
-      instructions,
-      imageUrl,
-      price,
-      weight,
-      viewArea,
-      sensors,
-      power,
-      shadeRange,
-      material,
-      description,
-      link,
-      installment,
-      size,
-      days,
-      ExtraField = [], // <-- новые поля
-    } = req.body;
+    const body = req.body;
 
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-
+    // маппим приходящие поля в те, что есть в Prisma
     const mask = await prisma.mask.create({
       data: {
-        name,
-        instructions: instructions || null,
-        imageUrl: imageUrl || null,
-        price: price || null,
-        weight: weight || null,
-        viewArea: viewArea || null,
-        sensors: sensors ? parseInt(sensors) : null,
-        power: power || null,
-        shadeRange: shadeRange || null,
-        material: material || null,
-        description: description || null,
-        link: link || null,
-        installment: installment || null,
-        size: size || null,
-        days: days || null,
+        name: body.model, // вместо name используем model
+        instructions: body.fullName || null,
+        price: body.retailPrice || null,
+        weight: body.weight || null,
+        viewArea: body.viewWindowSize || body.visibleArea || null,
+        sensors: body.sensorsCount ? parseInt(body.sensorsCount) : null,
+        shadeRange: body.shadeLevel || null,
+        power: body.lightState || null,
+        material: body.body || null,
+        description: body.article || null, // если article = описание
+        link: null, // у тебя нет ссылки на фронте
+        installment: null, // у тебя нет installment
+        size: null,
+        days: null,
+
         ExtraField: {
-          create: ExtraField
-            .filter(f => f.key && f.value) // защита от пустых
+          create: (body.extraFields || [])
+            .filter(f => f.key && f.value)
             .map(f => ({
               key: f.key,
               value: f.value,
             })),
         },
       },
-      include: {
-        ExtraField: true, // <-- если хочешь вернуть вместе с ответом
-      },
+      include: { ExtraField: true },
     });
 
     res.status(201).json(mask);
   } catch (error) {
-    console.error('Create mask error:', error.message);
+    console.error("Create mask error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 exports.updateMask = async (req, res) => {
   try {
@@ -307,10 +286,24 @@ exports.updateMask = async (req, res) => {
 exports.deleteMask = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.mask.delete({ where: { id: parseInt(id) } });
+
+    // сначала удаляем все связи
+    await prisma.userMask.deleteMany({
+      where: { maskId: Number(id) }
+    });
+
+    await prisma.extraField.deleteMany({
+      where: { maskId: Number(id) }
+    });
+
+    // потом саму маску
+    await prisma.mask.delete({
+      where: { id: Number(id) }
+    });
+
     res.status(204).send();
   } catch (error) {
-    console.error('Delete mask error:', error.message);
+    console.error("Delete mask error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
