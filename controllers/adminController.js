@@ -172,7 +172,7 @@ exports.createMask = async (req, res) => {
     // маппим приходящие поля в те, что есть в Prisma
     const mask = await prisma.mask.create({
       data: {
-        name: body.model, // вместо name используем model
+        name: body.model,
         instructions: body.fullName || null,
         price: body.retailPrice || null,
         weight: body.weight || null,
@@ -181,23 +181,34 @@ exports.createMask = async (req, res) => {
         shadeRange: body.shadeLevel || null,
         power: body.lightState || null,
         material: body.body || null,
-        description: body.article || null, // если article = описание
-        link: null, // у тебя нет ссылки на фронте
-        installment: null, // у тебя нет installment
-        size: null,
-        days: null,
-
+        description: body.article || null,
+    
+        batteryIndicator: body.batteryIndicator || null,
+        hdColorTech: body.hdColorTech || null,
+        memoryModes: body.memoryModes || null,
+        weldingTypes: body.weldingTypes || null,
+        gradientFunction: body.gradientFunction || null,
+        testButton: body.testButton || null,
+        sFireProtection: body.sFireProtection || null,
+        delayAdjustment: body.delayAdjustment || null,
+        sensitivityAdjustment: body.sensitivityAdjustment || null,
+        operatingTemp: body.operatingTemp || null,
+        opticalClass: body.opticalClass || null,
+        responseTime: body.responseTime || null,
+        headband: body.headband || null,
+        packageHeight: body.packageHeight || null,
+        packageLength: body.packageLength || null,
+        packageWidth: body.packageWidth || null,
+    
         ExtraField: {
           create: (body.extraFields || [])
             .filter(f => f.key && f.value)
-            .map(f => ({
-              key: f.key,
-              value: f.value,
-            })),
+            .map(f => ({ key: f.key, value: f.value })),
         },
       },
       include: { ExtraField: true },
     });
+    
 
     res.status(201).json(mask);
   } catch (error) {
@@ -210,62 +221,62 @@ exports.createMask = async (req, res) => {
 exports.updateMask = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      instructions,
-      imageUrl,
-      price,
-      weight,
-      viewArea,
-      sensors,
-      power,
-      shadeRange,
-      material,
-      description,
-      link,
-      installment,
-      size,
-      days,
-      ExtraField = [], // ✅ получаем доп. поля
-    } = req.body;
-
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
+    const body = req.body;
 
     const parsedId = parseInt(id);
+    if (isNaN(parsedId)) {
+      return res.status(400).json({ error: "Invalid ID" });
+    }
 
     const result = await prisma.$transaction([
       // 1. Обновляем основную маску
       prisma.mask.update({
         where: { id: parsedId },
         data: {
-          name,
-          instructions: instructions || null,
-          imageUrl: imageUrl || null,
-          price: price || null,
-          weight: weight || null,
-          viewArea: viewArea || null,
-          sensors: sensors ? parseInt(sensors) : null,
-          power: power || null,
-          shadeRange: shadeRange || null,
-          material: material || null,
-          description: description || null,
-          link: link || null,
-          installment: installment || null,
-          size: size || null,
-          days: days || null,
+          name: body.model, // фронт шлёт "model"
+          instructions: body.fullName,
+          imageUrl: body.imageUrl,
+          price: body.retailPrice,
+          weight: body.weight,
+          viewArea: body.viewWindowSize || body.visibleArea,
+          sensors: body.sensorsCount ? parseInt(body.sensorsCount) : null,
+          shadeRange: body.shadeLevel,
+          power: body.lightState,
+          material: body.body,
+          description: body.article,
+          link: body.link,
+          installment: body.installment,
+          size: body.size,
+          days: body.days,
+
+          // новые поля, если ты их добавил в модель:
+          batteryIndicator: body.batteryIndicator,
+          hdColorTech: body.hdColorTech,
+          memoryModes: body.memoryModes,
+          weldingTypes: body.weldingTypes,
+          gradientFunction: body.gradientFunction,
+          testButton: body.testButton,
+          sFireProtection: body.sFireProtection,
+          delayAdjustment: body.delayAdjustment,
+          sensitivityAdjustment: body.sensitivityAdjustment,
+          operatingTemp: body.operatingTemp,
+          opticalClass: body.opticalClass,
+          responseTime: body.responseTime,
+          headband: body.headband,
+          packageHeight: body.packageHeight,
+          packageLength: body.packageLength,
+          packageWidth: body.packageWidth,
         },
       }),
 
       // 2. Удаляем все старые ExtraField
-      prisma.ExtraField.deleteMany({
+      prisma.extraField.deleteMany({
         where: { maskId: parsedId },
       }),
 
       // 3. Создаём новые ExtraField
-      prisma.ExtraField.createMany({
-        data: ExtraField
+      prisma.extraField.createMany({
+        data: (body.extraFields || [])
           .filter(f => f.key && f.value)
           .map(f => ({
             key: f.key,
@@ -277,10 +288,11 @@ exports.updateMask = async (req, res) => {
 
     res.json({ updatedMask: result[0] });
   } catch (error) {
-    console.error('Update mask error:', error.message);
+    console.error("Update mask error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 exports.deleteMask = async (req, res) => {
@@ -419,7 +431,6 @@ exports.getUsers = async (req, res) => {
     const { telegramId } = req.query;
     const users = await prisma.user.findMany({
       where: telegramId ? { telegramId: { contains: telegramId } } : {},
-      include: { mask: true }, // Включаем данные о маске
     });
     res.json(users);
   } catch (error) {

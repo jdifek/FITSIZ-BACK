@@ -56,10 +56,29 @@ model Mask {
   installment  String?
   size         String?
   days         String?
-  features     Feature[]
-  reviews      Review[]
-  userMasks    UserMask[] // 👈 теперь список пользователей
-  ExtraField   ExtraField[]
+
+  // 👇 добавляешь новые
+  batteryIndicator      String?
+  hdColorTech           String?
+  memoryModes           String?
+  weldingTypes          String?
+  gradientFunction      String?
+  testButton            String?
+  sFireProtection       String?
+  delayAdjustment       String?
+  sensitivityAdjustment String?
+  operatingTemp         String?
+  opticalClass          String?
+  responseTime          String?
+  headband              String?
+  packageHeight         String?
+  packageLength         String?
+  packageWidth          String?
+
+  features   Feature[]
+  reviews    Review[]
+  userMasks  UserMask[]
+  ExtraField ExtraField[]
 }
 
 model ExtraField {
