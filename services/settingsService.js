@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require("../prisma");
 
 exports.getSetting = async (key) => {
   const setting = await prisma.setting.findUnique({ where: { key } });

@@ -217,7 +217,6 @@ exports.createMask = async (req, res) => {
   }
 };
 
-
 exports.updateMask = async (req, res) => {
   try {
     const { id } = req.params;
@@ -292,8 +291,6 @@ exports.updateMask = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 
 exports.deleteMask = async (req, res) => {
   try {
@@ -426,6 +423,7 @@ exports.sendGlobalMessage = async (req, res) => {
 
   res.json({ success: true, sentTo: chatIds.length });
 };
+
 exports.getUsers = async (req, res) => {
   try {
     const { telegramId } = req.query;

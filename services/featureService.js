@@ -1,6 +1,4 @@
-// services/featureService.js
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require("../prisma");
 
 exports.createFeature = async (name, maskId) => {
   return await prisma.feature.create({

@@ -1,6 +1,4 @@
-// services/reviewService.js
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require("../prisma");
 
 exports.createReview = async (userName, rating, comment, maskId, catalogId) => {
   return await prisma.review.create({
